@@ -33,7 +33,7 @@ void proclore(char **args, int num_args)
     char pid[4096];
     char state[4096];
     char pgrp[4096];
-    char vmSize[4096];
+    char vmSize[4096] = "0";
     char executablePath[4096];
 
     while (fgets(line, sizeof(line), file))
@@ -70,8 +70,8 @@ void proclore(char **args, int num_args)
                 pid_t fg_pgid = tcgetpgrp(STDIN_FILENO);  // Get the process group ID of the foreground process
                 pid_t process_pgid = getpgid(target_pid); // Get the process group ID of the target process
 
-                if (fg_pgid == process_pgid)
-                    strcat(state, "+"); // Process is in foreground
+                if (strcmp(state, "Z") != 0 && fg_pgid == process_pgid) // If the process is not a zombie and in the foreground
+                    strcat(state, "+");
             }
 
             // Process Group

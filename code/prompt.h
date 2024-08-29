@@ -5,10 +5,10 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/utsname.h>
-#include <stdlib.h>
 #include <string.h>
+#include "colors.h"
 
 // Print the prompt
-void prompt(const char *home_dir);
+void prompt(const char *home_dir, char *last_command);
 
 #endif
