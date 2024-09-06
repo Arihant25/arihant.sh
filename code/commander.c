@@ -1,85 +1,11 @@
 #include "commander.h"
 
-BackgroundProcess *bgProcesses = NULL;
-
-BackgroundProcess *createBgProcess(pid_t pid, char *name)
-{
-    BackgroundProcess *bgProcess = (BackgroundProcess *)malloc(sizeof(BackgroundProcess));
-    if (bgProcess == NULL)
-    {
-        printf(RED "Error: Memory allocation failed for background process\n" RESET);
-        return NULL;
-    }
-
-    bgProcess->pid = pid;
-    strcpy(bgProcess->name, name);
-    bgProcess->next = NULL;
-
-    return bgProcess;
-}
-
-void addBgProcess(pid_t pid, char *name, BackgroundProcess *head, BackgroundProcess *newBgProcess)
-{
-    if (head == NULL)
-    {
-        bgProcesses = newBgProcess;
-        return;
-    }
-
-    BackgroundProcess *temp = head;
-    while (temp->next != NULL)
-        temp = temp->next;
-
-    temp->next = newBgProcess;
-}
-
-bool checkBgProcesses()
-{
-    BackgroundProcess *temp = bgProcesses;
-    BackgroundProcess *prev = NULL;
-
-    while (temp != NULL)
-    {
-        int status;
-        pid_t result = waitpid(temp->pid, &status, WNOHANG);
-        if (result == -1)
-        {
-            printf(RED "Error: waitpid failed\n" RESET);
-            return false;
-        }
-
-        if (result > 0)
-        {
-            if (status == 0)
-                printf("%s exited normally (%d)\n", temp->name, temp->pid);
-            else
-                printf("%s exited abnormally (%d)\n", temp->name, temp->pid);
-
-            // Remove the process from the linked list
-            if (prev == NULL) // The process is the head of the linked list
-            {
-                bgProcesses = temp->next;
-                free(temp);
-                temp = bgProcesses;
-            }
-            else
-            {
-                prev->next = temp->next;
-                free(temp);
-                temp = prev->next;
-            }
-        }
-        else
-        {
-            prev = temp;
-            temp = temp->next;
-        }
-    }
-}
+processStruct *bgProcesses = NULL;
+processStruct *allProcesses = NULL;
 
 void commander(char *input_str, const char *home_dir, char **prev_dir, char **last_command)
 {
-    checkBgProcesses();
+    checkBgProcesses(&bgProcesses);
 
     // Set the start time
     time_t start = time(NULL);
@@ -240,33 +166,38 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
         else if (strcmp(args[0], "seek") == 0)
             seeker(args + 1, num_args - 1, home_dir);
 
-        // TODO: Show all processes
-        // else if (strcmp(args[0], "activities") == 0)
-        // activities();
+        // Show all processes
+        else if (strcmp(args[0], "activities") == 0)
+            activities(allProcesses);
 
-        // TODO: Send signals to a process
-        // else if (strcmp(args[0], "ping") == 0)
-        // ping(args + 1, num_args - 1);
+        // Send signals to a process
+        else if (strcmp(args[0], "ping") == 0)
+            ping(args + 1, num_args - 1);
 
         // TODO: Bring a process to the foreground
-        // else if (strcmp(args[0], "fg") == 0)
-        // fg(args + 1, num_args - 1);
+        else if (strcmp(args[0], "fg") == 0)
+            fg(args + 1, num_args - 1);
 
         // TODO: Send a process to the background
-        // else if (strcmp(args[0], "bg") == 0)
-        // bg(args + 1, num_args - 1);
+        else if (strcmp(args[0], "bg") == 0)
+            bg(args + 1, num_args - 1);
 
-        // TODO: Print the PID of the most recently executed command
-        // else if (strcmp(args[0], "neonate") == 0)
-        // neonate(args + 1, num_args - 1);
+        // Print the PID of the most recently executed command
+        else if (strcmp(args[0], "neonate") == 0)
+            neonate(args + 1, num_args - 1);
 
-        // TODO: Show man page
-        // else if (strcmp(args[0], "iMan") == 0)
-        // iMan(args + 1, num_args - 1);
+        // Show man page
+        else if (strcmp(args[0], "iMan") == 0)
+            iMan(args[1]);
 
         // Exit the shell
         else if (strcmp(args[0], "exit") == 0)
-            _exit(0);
+        {
+            // Free the memory allocated for the processes
+            freeProcesses(bgProcesses);
+            freeProcesses(allProcesses);
+            exit(0);
+        }
 
         // Execute other commands
         else
@@ -274,11 +205,19 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
             pid_t pid = fork();
             if (pid == 0) // Child process
             {
+                // Reset the signal handlers to default for child process
+                signal(SIGINT, SIG_DFL);
+                signal(SIGTSTP, SIG_DFL);
+
+                // Create a new process group
+                pid_t child_pid = getpid();
+                setpgid(child_pid, child_pid);
+
                 if (execvp(args[0], args) == -1)
                 {
                     printf(RED "ERROR : '%s' is not a valid command\n" RESET, args[0]);
                     fflush(stdout);
-                    _exit(1); // indicate error in child process
+                    _exit(1);
                 }
                 _exit(0);
             }
@@ -287,31 +226,43 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
                 printf(RED "ERROR : Fork failed\n" RESET);
 
             else // Parent process
+            {
+                setpgid(pid, pid);  // Ensure child is in its own process group
                 if (background)
                 {
-                    int status;
+                    int status = -1;
                     waitpid(pid, &status, WNOHANG);
 
-                    if (status && status == 0)
+                    // If the child process exited with a zero status
+                    if (WIFEXITED(status) == 0)
                     {
                         printf("%d\n", pid);
-                        addBgProcess(pid, args[0], bgProcesses, createBgProcess(pid, args[0]));
+                        addProcess(createProcessStruct(pid, args[0]), &bgProcesses);
                     }
-                    // If the child process exited with a non-zero status, we don't print the PID or add it to bgProcesses
+                    // If the child process exited with a non-zero status, don't do anything
                 }
-                else
+                else // Foreground process
+                {
+                    foreground_pid = pid;
                     waitpid(pid, NULL, 0);
+
+                    // Reset the foreground_pid
+                    foreground_pid = 0;
+                }
+                // Add the process to allProcesses
+                addProcess(createProcessStruct(pid, args[0]), &allProcesses);
+            }
         }
 
         // Set the end time
         time_t end = time(NULL);
 
-        // Calculate the time taken
-        double time_taken = difftime(end, start);
+        // Calculate the time taken as integer
+        int time_taken = difftime(end, start);
 
         // Store the command and time taken if foreground process
-        if (!background)
-            snprintf(*last_command, 4096, "%s : %.2fs", commands[j], time_taken);
+        if (!background && time_taken > 2)
+            snprintf(*last_command, 4096, "%s : %ds", commands[j], time_taken);
         else
             (*last_command)[0] = '\0';
 

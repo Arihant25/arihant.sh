@@ -7,7 +7,6 @@ void prompt(const char *home_dir, char *last_command)
     gethostname(hostname, 4096); // Get the hostname with buffer size 4096
 
     // Get the username
-    char username[4096];
     struct utsname u; // Struct to store the system name
     uname(&u);        // Get the system name into the struct
 
@@ -59,11 +58,11 @@ void prompt(const char *home_dir, char *last_command)
         }
 
         // Print the prompt
-        printf("\033[1;33m<%s@%s:%s " MAGENTA "%s: " CYAN "%s>\033[0m " RESET, p->pw_name, u.nodename, dir_display, command_name, command_time);
+        printf("<"BOLD YELLOW "%s" RESET GREEN "@%s:" CYAN "%s " MAGENTA "%s: " BLUE "%s> " RESET, p->pw_name, u.nodename, dir_display, command_name, command_time);
     }
 
     else // If there is no last command
-        printf("\033[1;33m<%s@%s:%s>\033[0m ", p->pw_name, u.nodename, dir_display);
+        printf("<"BOLD YELLOW "%s" RESET GREEN "@%s:" CYAN "%s" WHITE "> " RESET, p->pw_name, u.nodename, dir_display);
 
     last_command[0] = '\0'; // Clear the last_command
 }

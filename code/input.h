@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// Read the input string
-void input(char *input_str);
+#include "signal_handlers.h"
+
+// Read the input string and return success or failure
+int input(char *input_str);
 
 #endif

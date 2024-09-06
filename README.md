@@ -17,13 +17,16 @@ It is written in C and uses the system calls `fork()`, `execvp()`, `wait()`, as 
 2. Run `make` in the terminal.
 
 ## Features 🌟
-- Can run basic shell commands
-- Can run multiple commands in a single line
-- Can run commands in the background
-- Can change directories
-- Can view the log of commands run
-- Can output in full Technicolor!
-- Can exit the shell (no complicated steps required)
+- Run basic shell commands
+- Execute multiple commands in a single line
+- Run commands in the background
+- Change directories
+- View the log of commands run
+- Output in full Technicolor!
+- Customise the shell with a `.myshrc` file (aliases and functions)
+- Pipe commands
+- Redirect input and output
+- Exit the shell (no complicated steps required)
 
 ## Commands Supported 🪄
 - hop (cd)
@@ -31,12 +34,14 @@ It is written in C and uses the system calls `fork()`, `execvp()`, `wait()`, as 
 - log (history)
 - proclore
 - seek (find)
+- activities (jobs)
+- ping (kill)
+- fg
+- bg
+- neonate
+- iMan (man)
 - exit
 - Any other shell command
-
-## Future Work 🚧
-- Implement more shell commands
-- Implement piping and redirection
 
 ## Assumptions 🤔
 This project was based on the guidelines mentioned [here](https://web.archive.org/web/20240829135340/https://karthikv1392.github.io/cs3301_osn/mini-projects/mp1).
@@ -60,3 +65,14 @@ Accordingly, I have made some assumptions where the guidelines were not clear.
 8. If an erroneous command is run in the background, the shell will print an error message and return to the prompt. You might have to press enter to get the prompt back. This is because the shell will not wait for the command to finish.
 
 9. The `proclore` command gives the virtual memory in KB used by the shell. Moreoever, some processes may require privileges to know the path to their executable. In such cases, the shell will not print the path to the executable.
+
+10. The `iMan` command will show an error message if the command is not found in the manual.
+
+
+## Acknowledgements 🙏
+<!-- TODO: Update ChatGPT link -->
+- Linux Man Pages - For providing the documentation for the shell commands
+- [ChatGPT](https://chatgpt.com/share/b05ce87c-db03-4303-8503-bebc830d9a8e) - For invaluable advice and guidance throughout the project
+- OSN TA's - For coordinating the project and answering our queries
+- [Prof. Karthik V](https://karthikv1392.github.io) - For giving us the opportunity to work on this project and providing the guidelines
+- [IIIT Hyderabad](https://www.iiit.ac.in/) - For providing the platform and resources to work on this project
