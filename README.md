@@ -43,6 +43,10 @@ It is written in C and uses the system calls `fork()`, `execvp()`, `wait()`, as 
 - exit
 - Any other shell command
 
+## Usage 📝
+1. Type `make` in the terminal to compile and run the code.
+2. Use `make clean` to clean up the object and executable files, etc.
+
 ## Assumptions 🤔
 This project was based on the guidelines mentioned [here](https://web.archive.org/web/20240906104046/https://karthikv1392.github.io/cs3301_osn/mini-projects/mp1).
 
@@ -70,6 +74,125 @@ Accordingly, I have made some assumptions where the guidelines were not clear.
 
 11. The maximum number of aliases that can be stored is 4096.
 
+12. The maximum number of pipes that can be used in a single command is 4096.
+
+## Manual 📖
+### hop
+- `hop` is used to change the current working directory.
+- Usage: `hop [directory]`
+
+The locations you can use with `hop` are:
+- `-` : Go to the previous directory
+- `~` : Go to the home directory
+- `.` : Stay in the current directory
+- `..` : Go to the parent directory
+
+You can provide multiple locations to `hop` in a single line.
+For example, `hop .. ..` will take you to the grandparent directory.
+
+### reveal
+- `reveal` is used to list the contents of a directory.
+- Usage: `reveal [directory]`
+
+The flags you can use with `reveal` are:
+- `-l` : Show details about each file
+- `-a` : Show hidden files
+
+### log
+- `log` is used to view the history of commands run.
+
+The arguments you can pass to `log` are:
+- `execute <index>` : Run the command at the given index in the log, starting from the most recent command at index 1.
+- `purge` : Clear the log of all commands.
+
+### proclore
+- `proclore` is used to view the virtual memory used by the shell.
+
+By default it gives details about the shell process, but if passed a process ID, it will give details about that process.
+
+### seek
+- `seek` is used to search for files with a given name.
+
+Usage : `seek <file_name> <directory>`
+
+The directory is optional. If not provided, the search will be done in the current directory.
+
+It recursively searches for files and folders with the given name as a substring.
+
+The flags it accepts are:
+- `-f` : Search only for files
+- `-d` : Search only for directories
+- `e` : If only one file is found, print it in the terminal. If only one folder is found, print the contents of the folder.
+
+### activities
+- `activities` is used to view a list of every process that was spawned by the shell in the current session.
+
+### ping
+- `ping` is used to send a signal to a process.
+
+Usage : `ping <process_id> <signal>`
+
+### fg
+- `fg` is used to bring a background process to the foreground.
+
+Usage : `fg <process_id>`
+
+### bg
+- `bg` is used to send a process to the background.
+
+Usage : `bg <process_id>`
+
+### neonate
+- `neonate` is used to print the process ID of the most recently spawned process.
+
+Usage : `neonate -n <number>`
+
+### iMan
+- `iMan` is used to view the manual of a command from the internet.
+
+Usage : `iMan <command>`
+
+### exit
+- `exit` is used to exit the shell.
+
+### Signals
+- The shell supports the following signals:
+  - `SIGINT` : Interrupt signal (Ctrl + C)
+  - `SIGTSTP` : Stop signal (Ctrl + Z)
+  - `eof` : End of file (Ctrl + D)
+
+### Customisation
+You can customise the shell by adding aliases to the `.myshrc` file in the home directory.
+
+The format for adding aliases is:
+```
+alias <alias_name> = "<command>"
+```
+
+For example:
+```
+alias reveala = "reveal -a"
+```
+
+### Pipes
+- The shell supports piping of commands.
+
+For example:
+```
+reveal | grep .c
+```
+
+### Redirects
+- The shell supports redirection of input and output.
+
+For example:
+```
+reveal > output.txt
+```
+
+```
+reveal < input.txt
+```
 
 ## Acknowledgements 🙏
 - Linux Man Pages - For providing the documentation for the shell commands

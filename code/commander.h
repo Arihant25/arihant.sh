@@ -1,6 +1,8 @@
 #ifndef COMMANDER_H
 #define COMMANDER_H
 
+#define MAX_PIPES 4096
+
 #include "input.h"
 #include "hop.h"
 #include "colors.h"
@@ -19,12 +21,30 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <fcntl.h>
+
+// Check if the command contains redirection
+int check_redirection(char **args, int num_args, char **input_file,
+                      char **output_file, int *append_output, int *here_doc);
+
+// Handle redirection
+void handle_redirection(char *input_file, char *output_file,
+                        int append_output, int here_doc);
+
+// Execute a single command
+void execute_command(char **args, char *input_file, char *output_file,
+                     int append_output, int here_doc);
+
+// Execute piped commands
+void execute_piped_commands(char *command, const char *home_dir, char **prev_dir,
+                            char **last_command, char *aliases[4096]);
 
 // Execute the command
 void commander(char *input_str, const char *home_dir, char **prev_dir,
