@@ -3,7 +3,8 @@
 processStruct *bgProcesses = NULL;
 processStruct *allProcesses = NULL;
 
-void commander(char *input_str, const char *home_dir, char **prev_dir, char **last_command)
+void commander(char *input_str, const char *home_dir, char **prev_dir,
+               char **last_command, char *aliases[4096])
 {
     checkBgProcesses(&bgProcesses);
 
@@ -33,7 +34,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
 
     /*
     If the input was command_a arg_1 ; command_b arg_1 arg_2
-    commands = [command_a arg_1, command_b arg_1 arg_2]
+    commands = [command_a arg_1, command_b arg_1 arg_2, NULL]
     */
 
     for (int j = 0; j < num_commands; j++) // For each command
@@ -78,10 +79,10 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
 
             else if (strcmp(args[1], "execute") == 0)
             {
-
                 if (num_args != 3)
                 {
-                    printf(RED "Error: Invalid number of arguments for log execute (required 1, got %d)\n" RESET, num_args - 2);
+                    printf(RED "Error: Invalid number of arguments for log execute (required 1, got %d)\n" RESET,
+                           num_args - 2);
                     return;
                 }
 
@@ -139,7 +140,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
                     printf(RED "Error: Memory allocation failed\n" RESET);
                     return;
                 }
-                commander(command_copy, home_dir, prev_dir, last_command);
+                commander(command_copy, home_dir, prev_dir, last_command, aliases);
                 free(command_copy);
             }
 
@@ -174,11 +175,11 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
         else if (strcmp(args[0], "ping") == 0)
             ping(args + 1, num_args - 1);
 
-        // TODO: Bring a process to the foreground
+        // Bring a process to the foreground
         else if (strcmp(args[0], "fg") == 0)
             fg(args + 1, num_args - 1);
 
-        // TODO: Send a process to the background
+        // Send a process to the background
         else if (strcmp(args[0], "bg") == 0)
             bg(args + 1, num_args - 1);
 
@@ -190,28 +191,78 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
         else if (strcmp(args[0], "iMan") == 0)
             iMan(args[1]);
 
+        // Make a directory and change to it
+        else if (strcmp(args[0], "mk_hop") == 0)
+        {
+            // Make the directory
+            char *new_mkdir_command = (char *)malloc(4096);
+            snprintf(new_mkdir_command, 4096, "mkdir %s", args[1]);
+            commander(new_mkdir_command, home_dir, prev_dir, last_command, aliases);
+
+            // Change to the directory
+            char *new_hop_command = (char *)malloc(4096);
+            snprintf(new_hop_command, 4096, "hop %s", args[1]);
+            commander(new_hop_command, home_dir, prev_dir, last_command, aliases);
+
+            // Free the memory allocated for the commands
+            free(new_mkdir_command);
+            free(new_hop_command);
+        }
+
+        // Hop into a directory and search for its name
+        else if (strcmp(args[0], "hop_seek") == 0)
+        {
+            // Change to the directory
+            char *new_hop_command = (char *)malloc(4096);
+            snprintf(new_hop_command, 4096, "hop %s", args[1]);
+            commander(new_hop_command, home_dir, prev_dir, last_command, aliases);
+
+            // Search for the directory
+            char *new_seek_command = (char *)malloc(4096);
+            snprintf(new_seek_command, 4096, "seek %s", args[1]);
+            commander(new_seek_command, home_dir, prev_dir, last_command, aliases);
+
+            // Free the memory allocated for the commands
+            free(new_hop_command);
+            free(new_seek_command);
+        }
+
         // Exit the shell
         else if (strcmp(args[0], "exit") == 0)
         {
             // Free the memory allocated for the processes
             freeProcesses(bgProcesses);
             freeProcesses(allProcesses);
+
+            // Reset the signal handlers to default
+            signal(SIGINT, SIG_DFL);
+
+            // Remove the uncommented script file
+            remove("temp.myshrc");
+
             exit(0);
         }
 
         // Execute other commands
         else
         {
+            // Check if the command is an alias
+            char *alias_value = get_alias(aliases, args[0]);
+            if (alias_value != NULL)
+            {
+                char *alias_copy = strdup(alias_value);
+                printf(GREEN "Executing alias: %s\n" RESET, alias_copy);
+                commander(alias_copy, home_dir, prev_dir, last_command, aliases);
+                free(alias_copy);
+                continue;
+            }
+
             pid_t pid = fork();
             if (pid == 0) // Child process
             {
                 // Reset the signal handlers to default for child process
                 signal(SIGINT, SIG_DFL);
                 signal(SIGTSTP, SIG_DFL);
-
-                // Create a new process group
-                pid_t child_pid = getpid();
-                setpgid(child_pid, child_pid);
 
                 if (execvp(args[0], args) == -1)
                 {
@@ -227,7 +278,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir, char **la
 
             else // Parent process
             {
-                setpgid(pid, pid);  // Ensure child is in its own process group
+                setpgid(pid, pid); // Ensure child is in its own process group
                 if (background)
                 {
                     int status = -1;

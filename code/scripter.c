@@ -1,12 +1,46 @@
 #include "scripter.h"
 
-void scripter(char *aliases[], char *functions[])
+void comment_cleaner()
 {
-    // Open the script file .myshrc
-    FILE *script = fopen(".myshrc", "r");
-    if (script == NULL)
+    FILE *dirtyscript = fopen(".myshrc", "r");
+    if (dirtyscript == NULL)
     {
         printf(RED "Error: Cannot open file .myshrc\n" RESET);
+        return;
+    }
+
+    FILE *cleanscript = fopen("temp.myshrc", "w");
+    if (cleanscript == NULL)
+    {
+        printf(RED "Error: Cannot open file temp.myshrc\n" RESET);
+        fclose(dirtyscript);
+        return;
+    }
+
+    char line[4096];
+
+    while (fgets(line, sizeof(line), dirtyscript))
+    {
+        char *comment = strchr(line, '#');
+        if (comment)
+            *comment = '\0';
+        fprintf(cleanscript, "%s\n", line);
+    }
+
+    fclose(dirtyscript);
+    fclose(cleanscript);
+}
+
+void scripter(char *aliases[])
+{
+    // Clean the script file
+    comment_cleaner();
+
+    // Open the uncommented script file
+    FILE *script = fopen("temp.myshrc", "r");
+    if (script == NULL)
+    {
+        printf(RED "Error: Cannot open file temp.myshrc\n" RESET);
         return;
     }
 
@@ -31,8 +65,8 @@ void scripter(char *aliases[], char *functions[])
             {
                 *equals_sign = '\0'; // Split the string at '='
                 char *save_ptr;
-                char *name = strtok_r(alias_def, " \t", &save_ptr); // Get the alias name
-                char *value = equals_sign + 1; // Get the alias value
+                char *name = strtok_r(alias_def, " ", &save_ptr); // Get the alias name
+                char *value = equals_sign + 2;                    // Get the alias value
                 while (*value == ' ' || *value == '\t')
                     value++; // Skip leading spaces
 
@@ -48,21 +82,18 @@ void scripter(char *aliases[], char *functions[])
                 }
             }
         }
-        // Check if the line is a function
-        else if (strchr(line, '(') && strchr(line, ')'))
-        {
-            char *function_name = strtok(line, "( \t");
-            if (function_name && function_index < 4096)
-                functions[function_index++] = strdup(function_name);
-        }
     }
-
-    // Null-terminate the arrays
-    if (alias_index < 4096)
-        aliases[alias_index] = NULL;
-    if (function_index < 4096)
-        functions[function_index] = NULL;
+    // Null-terminate the array
+    aliases[alias_index] = NULL;
 
     // Close the script file
     fclose(script);
+}
+
+char *get_alias(char *aliases[], char *alias)
+{
+    for (int i = 0; aliases[i] != NULL; i += 2)
+        if (strcmp(aliases[i], alias) == 0)
+            return aliases[i + 1];
+    return NULL;
 }

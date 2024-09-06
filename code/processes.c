@@ -43,10 +43,7 @@ void checkBgProcesses(struct processStruct **processList)
         int status;
         pid_t result = waitpid(temp->pid, &status, WNOHANG);
         if (result == -1)
-        {
-            printf(RED "Error: waitpid failed for process %d\n" RESET, temp->pid);
             return;
-        }
 
         if (result > 0)
         {

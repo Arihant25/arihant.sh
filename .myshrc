@@ -1,5 +1,5 @@
-alias reveala = reveal -a
-alias home = hop ~
+alias reveala = reveal -a # Reveal all files
+alias home = hop ~ # Go to home directory
 
 func mk_hop()
 {
@@ -7,3 +7,10 @@ func mk_hop()
 	hop "$1" # Change into the directory
 }
 
+func hop_seek()
+{
+    hop "$1" # Hop into this directory
+    seek "$1" # search for files/directories with the same name as the directory you just hopped into.
+}
+
+alias hopup = hop ..

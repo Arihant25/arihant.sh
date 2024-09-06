@@ -15,6 +15,7 @@
 #include "ping.h"
 #include "signal_handlers.h"
 #include "fgbg.h"
+#include "scripter.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -26,6 +27,7 @@
 #include <time.h>
 
 // Execute the command
-void commander(char *input_str, const char *home_dir, char **prev_dir, char **last_command);
+void commander(char *input_str, const char *home_dir, char **prev_dir,
+               char **last_command, char *aliases[4096]);
 
 #endif

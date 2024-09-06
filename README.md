@@ -23,7 +23,7 @@ It is written in C and uses the system calls `fork()`, `execvp()`, `wait()`, as 
 - Change directories
 - View the log of commands run
 - Output in full Technicolor!
-- Customise the shell with a `.myshrc` file (aliases and functions)
+- Customise the shell with a `.myshrc` file (aliases)
 - Pipe commands
 - Redirect input and output
 - Exit the shell (no complicated steps required)
@@ -44,7 +44,7 @@ It is written in C and uses the system calls `fork()`, `execvp()`, `wait()`, as 
 - Any other shell command
 
 ## Assumptions 🤔
-This project was based on the guidelines mentioned [here](https://web.archive.org/web/20240829135340/https://karthikv1392.github.io/cs3301_osn/mini-projects/mp1).
+This project was based on the guidelines mentioned [here](https://web.archive.org/web/20240906104046/https://karthikv1392.github.io/cs3301_osn/mini-projects/mp1).
 
 Accordingly, I have made some assumptions where the guidelines were not clear.
 
@@ -68,9 +68,10 @@ Accordingly, I have made some assumptions where the guidelines were not clear.
 
 10. The `iMan` command will show an error message if the command is not found in the manual.
 
+11. The maximum number of aliases that can be stored is 4096.
+
 
 ## Acknowledgements 🙏
-<!-- TODO: Update ChatGPT link -->
 - Linux Man Pages - For providing the documentation for the shell commands
 - [ChatGPT](https://chatgpt.com/share/b05ce87c-db03-4303-8503-bebc830d9a8e) - For invaluable advice and guidance throughout the project
 - OSN TA's - For coordinating the project and answering our queries

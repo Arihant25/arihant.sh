@@ -19,14 +19,12 @@ void sigint_handler(int signum)
     }
 }
 
-// FIXME: Ctrl + Z works too well. It stops the shell itself.
 void sigtstp_handler(int signum)
 {
-    if (foreground_pid != 0) // If there is a foreground process running
+    if (foreground_pid != 0)
     {
         kill(foreground_pid, SIGTSTP);
         printf("\nProcess %d stopped\n", foreground_pid);
-        addProcess(createProcessStruct(foreground_pid, "Unknown"), &bgProcesses);
         foreground_pid = 0;
     }
 }

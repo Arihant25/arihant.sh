@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <termios.h>
+#include <sys/stat.h>
 
 #include "processes.h"
 #include "signal_handlers.h"
