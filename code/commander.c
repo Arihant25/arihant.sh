@@ -5,10 +5,10 @@ processStruct *allProcesses = NULL;
 
 int check_redirection(char **args, int num_args, char **input_file, char **output_file, int *append_output, int *here_doc)
 {
-    *input_file = NULL;
-    *output_file = NULL;
-    *append_output = 0;
-    *here_doc = 0;
+    *input_file = NULL;  // Input file for redirection
+    *output_file = NULL; // Output file for redirection
+    *append_output = 0;  // Flag to check if output should be appended
+    *here_doc = 0;       // Flag to check if here-document is used
     for (int i = 0; i < num_args - 1; i++)
     {
         if (strcmp(args[i], "<") == 0)
@@ -39,53 +39,54 @@ int check_redirection(char **args, int num_args, char **input_file, char **outpu
 
 void handle_redirection(char *input_file, char *output_file, int append_output, int here_doc)
 {
-    if (input_file)
+    if (input_file) // Handle input redirection (<) or here-document (<<)
     {
-        if (here_doc)
+        if (here_doc) // Handle here-document (<<)
         {
             // Handle here-document (<<)
-            char temp_file[] = "/tmp/here_doc_XXXXXX";
-            int fd = mkstemp(temp_file);
+            char temp_file[] = "/tmp/arihantsh_here_doc_XXXXXX"; // Temporary file to store the here-document
+            int fd = mkstemp(temp_file);                         // Create a temporary file
             if (fd == -1)
             {
-                printf(RED "Error creating temporary file\n" RESET);
+                printf(RED "Error: Couldn't create temporary file\n" RESET);
                 exit(1);
             }
-            char buffer[4096];
-            while (fgets(buffer, sizeof(buffer), stdin))
+            char buffer[4096];                           // Buffer to store the input
+            while (fgets(buffer, sizeof(buffer), stdin)) // Read input from the user
             {
-                if (strcmp(buffer, input_file) == 0)
+                if (strcmp(buffer, input_file) == 0) // If the user enters the delimiter, break
                     break;
-                write(fd, buffer, strlen(buffer));
+                write(fd, buffer, strlen(buffer)); // Write the input to the temporary file
             }
             lseek(fd, 0, SEEK_SET);
-            dup2(fd, STDIN_FILENO);
+            dup2(fd, STDIN_FILENO); // Redirect the input to the temporary file
             close(fd);
-            unlink(temp_file);
+            unlink(temp_file); // Remove the temporary file
         }
-        else
+        else // Handle input redirection (<)
         {
             int fd = open(input_file, O_RDONLY);
             if (fd == -1)
             {
-                perror("Error opening input file");
+                printf(RED "Error: Couldn't open input file\n" RESET);
                 exit(1);
             }
-            dup2(fd, STDIN_FILENO);
+            dup2(fd, STDIN_FILENO); // Redirect the input to the file
             close(fd);
         }
     }
-    if (output_file)
+    if (output_file) // Handle output redirection (>) or append output (>>)
     {
         int flags = O_WRONLY | O_CREAT;
         if (append_output)
             flags |= O_APPEND;
         else
             flags |= O_TRUNC;
+
         int fd = open(output_file, flags, 0644);
         if (fd == -1)
         {
-            printf(RED "Error opening output file\n" RESET);
+            printf(RED "Error: Couldn't open output file\n" RESET);
             exit(1);
         }
         dup2(fd, STDOUT_FILENO);
@@ -117,33 +118,51 @@ void execute_command(char **args, char *input_file, char *output_file, int appen
 
 void execute_piped_commands(char *command, const char *home_dir, char **prev_dir, char **last_command, char *aliases[4096])
 {
-    int pipe_count = 0;
-    char *pipe_commands[MAX_PIPES + 1];
+    // Trim leading and trailing whitespace
+    while (isspace(*command)) command++;
+    char *end = command + strlen(command) - 1;
+    while (end > command && isspace(*end)) end--;
+    *(end + 1) = '\0';
+
+    // Check if the command starts or ends with a pipe
+    if (command[0] == '|' || command[strlen(command) - 1] == '|')
+    {
+        printf(RED "Invalid use of pipe\n" RESET);
+        return;
+    }
+
+    int pipe_count = 0;                 // Number of pipes in the command
+    char *pipe_commands[MAX_PIPES + 1]; // Array to store the commands separated by pipes
     char *saveptr;
 
     // Split the command by pipes
     pipe_commands[pipe_count] = strtok_r(command, "|", &saveptr);
     while (pipe_commands[pipe_count] != NULL && pipe_count < MAX_PIPES)
     {
+        // Trim leading and trailing whitespace for each command
+        while (isspace(*pipe_commands[pipe_count])) pipe_commands[pipe_count]++;
+        end = pipe_commands[pipe_count] + strlen(pipe_commands[pipe_count]) - 1;
+        while (end > pipe_commands[pipe_count] && isspace(*end)) end--;
+        *(end + 1) = '\0';
+
+        // Check for empty command between pipes
+        if (strlen(pipe_commands[pipe_count]) == 0)
+        {
+            printf(RED "Invalid use of pipe\n" RESET);
+            return;
+        }
+
         pipe_count++;
         pipe_commands[pipe_count] = strtok_r(NULL, "|", &saveptr);
     }
 
-    if (pipe_count == 0 || pipe_commands[0] == NULL)
-    {
-        printf(RED "Invalid use of pipe\n" RESET);
-        return;
-    }
-
-    int pipes[MAX_PIPES][2];
-    for (int i = 0; i < pipe_count - 1; i++)
-    {
+    int pipes[MAX_PIPES][2];                 // Array to store the pipe fds
+    for (int i = 0; i < pipe_count - 1; i++) // For n commands, there are n - 1 pipes
         if (pipe(pipes[i]) < 0)
         {
             printf(RED "Error creating pipe\n" RESET);
             exit(1);
         }
-    }
 
     for (int i = 0; i < pipe_count; i++)
     {
@@ -474,6 +493,8 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                         signal(SIGINT, SIG_DFL);
                         signal(SIGTSTP, SIG_DFL);
 
+                        setpgid(0, 0); // Set the child as the leader of its own process group
+
                         if (execvp(args[0], args) == -1)
                         {
                             printf(RED "ERROR : '%s' is not a valid command\n" RESET, args[0]);
@@ -482,14 +503,50 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                         }
                         _exit(0);
                     }
-
                     else if (pid < 0)
                         printf(RED "ERROR : Fork failed\n" RESET);
 
                     else // Parent process
                     {
                         setpgid(pid, pid); // Ensure child is in its own process group
-                        if (background)
+                        if (!background)
+                        {
+                            foreground_pid = pid;
+
+                            // Block SIGTTOU while giving terminal control to child
+                            sigset_t mask, oldmask;                  // Signal sets
+                            sigemptyset(&mask);                      // Create an empty set
+                            sigaddset(&mask, SIGTTOU);               // Add SIGTTOU to the set
+                            sigprocmask(SIG_BLOCK, &mask, &oldmask); // Block SIGTTOU
+
+                            if (tcsetpgrp(STDIN_FILENO, pid) == -1)
+                                printf(RED "Failed to give terminal control to child\n" RESET);
+
+                            int status;
+                            pid_t result = waitpid(pid, &status, WUNTRACED);
+                            if (result == -1)
+                                printf(RED "Error: waitpid failed\n" RESET);
+
+                            else if (WIFEXITED(status) || WIFSIGNALED(status))
+                            {
+                                // Child has terminated, no need to reclaim control
+                            }
+
+                            else if (WIFSTOPPED(status))
+                            {
+                                printf("\nProcess %d stopped\n", pid);
+                                addProcess(createProcessStruct(pid, args[0]), &bgProcesses);
+                            }
+
+                            // Ensure shell regains control of the terminal
+                            if (tcsetpgrp(STDIN_FILENO, getpgrp()) == -1)
+                                printf(RED "Failed to regain terminal control\n" RESET);
+
+                            sigprocmask(SIG_SETMASK, &oldmask, NULL); // Unblock SIGTTOU
+
+                            foreground_pid = 0; // Reset the foreground process ID
+                        }
+                        else // Background process
                         {
                             int status = -1;
                             waitpid(pid, &status, WNOHANG);
@@ -502,14 +559,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                             }
                             // If the child process exited with a non-zero status, don't do anything
                         }
-                        else // Foreground process
-                        {
-                            foreground_pid = pid;
-                            waitpid(pid, NULL, 0);
 
-                            // Reset the foreground_pid
-                            foreground_pid = 0;
-                        }
                         // Add the process to allProcesses
                         addProcess(createProcessStruct(pid, args[0]), &allProcesses);
                     }

@@ -76,6 +76,8 @@ Accordingly, I have made some assumptions where the guidelines were not clear.
 
 12. The maximum number of pipes that can be used in a single command is 4096.
 
+13. If a command run is run in the background, and the command is invalid, it will print a PID along with the error message. The PID will be the PID of the child process that was forked to run the command.
+
 ## Manual 📖
 ### hop
 - `hop` is used to change the current working directory.
@@ -196,7 +198,7 @@ reveal < input.txt
 
 ## Acknowledgements 🙏
 - Linux Man Pages - For providing the documentation for the shell commands
-- [ChatGPT](https://chatgpt.com/share/b05ce87c-db03-4303-8503-bebc830d9a8e) - For invaluable advice and guidance throughout the project
+- [Chat](https://chatgpt.com/share/b05ce87c-db03-4303-8503-bebc830d9a8e)[GP](https://chatgpt.com/share/22fe20e2-3997-4f2b-b1ca-30d844b11115)[T](https://chatgpt.com/share/1cf465c7-b267-4cdf-be42-148cb46dea54) - For invaluable advice and guidance throughout the project
 - OSN TA's - For coordinating the project and answering our queries
 - [Prof. Karthik V](https://karthikv1392.github.io) - For giving us the opportunity to work on this project and providing the guidelines
 - [IIIT Hyderabad](https://www.iiit.ac.in/) - For providing the platform and resources to work on this project

@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <fcntl.h>
+#include <termios.h>
 
 // Check if the command contains redirection
 int check_redirection(char **args, int num_args, char **input_file,

@@ -14,3 +14,5 @@ func hop_seek()
 }
 
 alias hopup = hop ..
+
+alias cleanup = clear ; log purge

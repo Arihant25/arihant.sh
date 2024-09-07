@@ -47,7 +47,6 @@ void scripter(char *aliases[])
     // Read the script file line by line
     char line[4096];
     int alias_index = 0;
-    int function_index = 0;
 
     while (fgets(line, sizeof(line), script))
     {

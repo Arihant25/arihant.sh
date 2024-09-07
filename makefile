@@ -1,4 +1,4 @@
-CC = gcc -g # -Wall -Wextra
+CC = gcc
 SRC_DIR = ./code
 OBJ_DIR = ./obj
 TARGET = ./a.out
