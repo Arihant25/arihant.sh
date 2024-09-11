@@ -16,6 +16,7 @@ typedef struct processStruct
 {
     pid_t pid;
     char name[4096];
+    char status[4096];
     struct processStruct *next;
 } processStruct;
 

@@ -11,6 +11,7 @@ processStruct *createProcessStruct(pid_t pid, char *name)
 
     newProcess->pid = pid;
     strcpy(newProcess->name, name);
+    strcpy(newProcess->status, "Running");
     newProcess->next = NULL;
 
     return newProcess;

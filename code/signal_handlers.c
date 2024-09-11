@@ -25,6 +25,36 @@ void sigtstp_handler(int signum)
     {
         kill(foreground_pid, SIGTSTP);
         printf("\nProcess %d stopped\n", foreground_pid);
+
+        // Update status in allProcesses list
+        processStruct *temp = allProcesses;
+        while (temp != NULL) {
+            if (temp->pid == foreground_pid) {
+                strcpy(temp->status, "Stopped");
+                break;
+            }
+            temp = temp->next;
+        }
+
+        // Add the process to bgProcesses list if it's not already there
+        temp = bgProcesses;
+        bool found = false;
+        while (temp != NULL) {
+            if (temp->pid == foreground_pid) {
+                found = true;
+                break;
+            }
+            temp = temp->next;
+        }
+        if (!found) {
+            processStruct *stoppedProcess = createProcessStruct(foreground_pid, "Unknown");
+            strcpy(stoppedProcess->status, "Stopped");
+            addProcess(stoppedProcess, &bgProcesses);
+        }
+
+        // Ensure shell regains control of the terminal
+        tcsetpgrp(STDIN_FILENO, getpgrp());
+
         foreground_pid = 0;
     }
 }
