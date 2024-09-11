@@ -1,5 +1,7 @@
 # Arihant.sh
 
+[![wakatime](https://wakatime.com/badge/user/77cdaa68-53d6-4cf6-8c9c-7ec147407ce9/project/7abeae12-6456-4d82-b8a1-1156bae4ef28.svg)](https://wakatime.com/badge/user/77cdaa68-53d6-4cf6-8c9c-7ec147407ce9/project/7abeae12-6456-4d82-b8a1-1156bae4ef28)
+
 ## Description 📃
 This is a shell emulator that can run basic shell commands.
 It was created as a part of the Operating Systems and Networks course at IIIT Hyderabad.
@@ -185,7 +187,7 @@ reveal | grep .c
 ```
 
 ### Redirects
-- The shell supports redirection of input and output.
+- The shell supports redirection of input and output using <, > and >>.
 
 For example:
 ```
@@ -198,7 +200,7 @@ reveal < input.txt
 
 ## Acknowledgements 🙏
 - Linux Man Pages - For providing the documentation for the shell commands
-- [Chat](https://chatgpt.com/share/b05ce87c-db03-4303-8503-bebc830d9a8e)[GP](https://chatgpt.com/share/22fe20e2-3997-4f2b-b1ca-30d844b11115)[T](https://chatgpt.com/share/1cf465c7-b267-4cdf-be42-148cb46dea54) - For invaluable advice and guidance throughout the project
+- [Claude](https://1drv.ms/f/s!AiCXUjj-oBYdgsYUgTEwHKnuvzMFxw?e=4foifx) and [ChatGPT](https://justpaste.it/e0sf6) - For invaluable advice and guidance throughout the project
 - OSN TA's - For coordinating the project and answering our queries
 - [Prof. Karthik V](https://karthikv1392.github.io) - For giving us the opportunity to work on this project and providing the guidelines
 - [IIIT Hyderabad](https://www.iiit.ac.in/) - For providing the platform and resources to work on this project

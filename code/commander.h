@@ -33,15 +33,15 @@
 
 // Check if the command contains redirection
 int check_redirection(char **args, int num_args, char **input_file,
-                      char **output_file, int *append_output, int *here_doc);
+                      char **output_file, int *append_output);
 
 // Handle redirection
 void handle_redirection(char *input_file, char *output_file,
-                        int append_output, int here_doc);
+                        int append_output);
 
 // Execute a single command
 void execute_command(char **args, char *input_file, char *output_file,
-                     int append_output, int here_doc);
+                     int append_output);
 
 // Execute piped commands
 void execute_piped_commands(char *command, const char *home_dir, char **prev_dir,

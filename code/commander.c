@@ -3,12 +3,16 @@
 processStruct *bgProcesses = NULL;
 processStruct *allProcesses = NULL;
 
-int check_redirection(char **args, int num_args, char **input_file, char **output_file, int *append_output, int *here_doc)
+// TODO: Implement pipes and redirection for custom commands
+// TODO: Implement backgrounding for pipes and redirects (& should work only for the command immediately preceeding it, not for the entire pipe)
+// FIXME: Activities: Terminated processes are not "stopped", they simply are removed from your list of processes. So only print "stopped" for stopped processes
+// FIXME: Ctrl + Z should stop the process and print "stopped" in activities
+
+int check_redirection(char **args, int num_args, char **input_file, char **output_file, int *append_output)
 {
     *input_file = NULL;  // Input file for redirection
     *output_file = NULL; // Output file for redirection
     *append_output = 0;  // Flag to check if output should be appended
-    *here_doc = 0;       // Flag to check if here-document is used
     for (int i = 0; i < num_args - 1; i++)
     {
         if (strcmp(args[i], "<") == 0)
@@ -27,53 +31,22 @@ int check_redirection(char **args, int num_args, char **input_file, char **outpu
             *append_output = 1;
             args[i] = NULL;
         }
-        else if (strcmp(args[i], "<<") == 0)
-        {
-            *input_file = args[i + 1];
-            *here_doc = 1;
-            args[i] = NULL;
-        }
     }
-    return (*input_file != NULL || *output_file != NULL);
+    return (*input_file != NULL || *output_file != NULL); // Return true if redirection is used
 }
 
-void handle_redirection(char *input_file, char *output_file, int append_output, int here_doc)
+void handle_redirection(char *input_file, char *output_file, int append_output)
 {
-    if (input_file) // Handle input redirection (<) or here-document (<<)
+    if (input_file) // Handle input redirection (<)
     {
-        if (here_doc) // Handle here-document (<<)
+        int fd = open(input_file, O_RDONLY);
+        if (fd == -1)
         {
-            // Handle here-document (<<)
-            char temp_file[] = "/tmp/arihantsh_here_doc_XXXXXX"; // Temporary file to store the here-document
-            int fd = mkstemp(temp_file);                         // Create a temporary file
-            if (fd == -1)
-            {
-                printf(RED "Error: Couldn't create temporary file\n" RESET);
-                exit(1);
-            }
-            char buffer[4096];                           // Buffer to store the input
-            while (fgets(buffer, sizeof(buffer), stdin)) // Read input from the user
-            {
-                if (strcmp(buffer, input_file) == 0) // If the user enters the delimiter, break
-                    break;
-                write(fd, buffer, strlen(buffer)); // Write the input to the temporary file
-            }
-            lseek(fd, 0, SEEK_SET);
-            dup2(fd, STDIN_FILENO); // Redirect the input to the temporary file
-            close(fd);
-            unlink(temp_file); // Remove the temporary file
+            printf(RED "Error: Couldn't open input file\n" RESET);
+            exit(1);
         }
-        else // Handle input redirection (<)
-        {
-            int fd = open(input_file, O_RDONLY);
-            if (fd == -1)
-            {
-                printf(RED "Error: Couldn't open input file\n" RESET);
-                exit(1);
-            }
-            dup2(fd, STDIN_FILENO); // Redirect the input to the file
-            close(fd);
-        }
+        dup2(fd, STDIN_FILENO); // Redirect the input to the file
+        close(fd);
     }
     if (output_file) // Handle output redirection (>) or append output (>>)
     {
@@ -94,12 +67,12 @@ void handle_redirection(char *input_file, char *output_file, int append_output, 
     }
 }
 
-void execute_command(char **args, char *input_file, char *output_file, int append_output, int here_doc)
+void execute_command(char **args, char *input_file, char *output_file, int append_output)
 {
     pid_t pid = fork();
     if (pid == 0) // Child process
     {
-        handle_redirection(input_file, output_file, append_output, here_doc);
+        handle_redirection(input_file, output_file, append_output);
         execvp(args[0], args);
         printf(RED "ERROR : '%s' is not a valid command\n" RESET, args[0]);
         exit(1);
@@ -119,9 +92,11 @@ void execute_command(char **args, char *input_file, char *output_file, int appen
 void execute_piped_commands(char *command, const char *home_dir, char **prev_dir, char **last_command, char *aliases[4096])
 {
     // Trim leading and trailing whitespace
-    while (isspace(*command)) command++;
+    while (isspace(*command))
+        command++;
     char *end = command + strlen(command) - 1;
-    while (end > command && isspace(*end)) end--;
+    while (end > command && isspace(*end))
+        end--;
     *(end + 1) = '\0';
 
     // Check if the command starts or ends with a pipe
@@ -140,9 +115,11 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
     while (pipe_commands[pipe_count] != NULL && pipe_count < MAX_PIPES)
     {
         // Trim leading and trailing whitespace for each command
-        while (isspace(*pipe_commands[pipe_count])) pipe_commands[pipe_count]++;
+        while (isspace(*pipe_commands[pipe_count]))
+            pipe_commands[pipe_count]++;
         end = pipe_commands[pipe_count] + strlen(pipe_commands[pipe_count]) - 1;
-        while (end > pipe_commands[pipe_count] && isspace(*end)) end--;
+        while (end > pipe_commands[pipe_count] && isspace(*end))
+            end--;
         *(end + 1) = '\0';
 
         // Check for empty command between pipes
@@ -177,8 +154,8 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
         args[arg_count] = NULL;
 
         char *input_file = NULL, *output_file = NULL;
-        int append_output = 0, here_doc = 0;
-        check_redirection(args, arg_count, &input_file, &output_file, &append_output, &here_doc);
+        int append_output = 0;
+        check_redirection(args, arg_count, &input_file, &output_file, &append_output);
 
         pid_t pid = fork();
         if (pid == 0) // Child process
@@ -196,7 +173,7 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
                 close(pipes[j][1]);
             }
 
-            handle_redirection(input_file, output_file, append_output, here_doc);
+            handle_redirection(input_file, output_file, append_output);
             execvp(args[0], args);
             printf(RED "ERROR : '%s' is not a valid command\n" RESET, args[0]);
             exit(1);
@@ -272,9 +249,9 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
             args[arg_count] = NULL;
 
             char *input_file = NULL, *output_file = NULL;
-            int append_output = 0, here_doc = 0;
-            if (check_redirection(args, arg_count, &input_file, &output_file, &append_output, &here_doc))
-                execute_command(args, input_file, output_file, append_output, here_doc);
+            int append_output = 0;
+            if (check_redirection(args, arg_count, &input_file, &output_file, &append_output))
+                execute_command(args, input_file, output_file, append_output);
             else
             {
                 // Check if the last argument is &
@@ -519,10 +496,10 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                             sigaddset(&mask, SIGTTOU);               // Add SIGTTOU to the set
                             sigprocmask(SIG_BLOCK, &mask, &oldmask); // Block SIGTTOU
 
-                            if (tcsetpgrp(STDIN_FILENO, pid) == -1)
+                            if (tcsetpgrp(STDIN_FILENO, pid) == -1) // Give terminal control to child
                                 printf(RED "Failed to give terminal control to child\n" RESET);
 
-                            int status;
+                            int status; // Status of the child process
                             pid_t result = waitpid(pid, &status, WUNTRACED);
                             if (result == -1)
                                 printf(RED "Error: waitpid failed\n" RESET);
@@ -532,7 +509,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                                 // Child has terminated, no need to reclaim control
                             }
 
-                            else if (WIFSTOPPED(status))
+                            else if (WIFSTOPPED(status)) // Child process was stopped
                             {
                                 printf("\nProcess %d stopped\n", pid);
                                 addProcess(createProcessStruct(pid, args[0]), &bgProcesses);
@@ -548,7 +525,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                         }
                         else // Background process
                         {
-                            int status = -1;
+                            int status = -1; // Status of the child process
                             waitpid(pid, &status, WNOHANG);
 
                             // If the child process exited with a zero status
