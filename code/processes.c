@@ -75,6 +75,36 @@ void checkBgProcesses(struct processStruct **processList)
     }
 }
 
+void removeProcess(pid_t pid, processStruct **head)
+{
+    processStruct *temp = *head;
+    processStruct *prev = NULL;
+
+    while (temp != NULL)
+    {
+        if (temp->pid == pid)
+        {
+            if (prev == NULL) // If the process is the head of the linked list
+            {
+                *head = temp->next;
+                free(temp);
+                temp = *head;
+            }
+            else
+            {
+                prev->next = temp->next;
+                free(temp);
+                temp = prev->next;
+            }
+        }
+        else
+        {
+            prev = temp;
+            temp = temp->next;
+        }
+    }
+}
+
 void freeProcesses(processStruct *head)
 {
     processStruct *temp = head;

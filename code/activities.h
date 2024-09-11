@@ -6,6 +6,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include <sys/types.h>
 
 #include "colors.h"

@@ -5,8 +5,7 @@ processStruct *allProcesses = NULL;
 
 // TODO: Implement pipes and redirection for custom commands
 // TODO: Implement backgrounding for pipes and redirects (& should work only for the command immediately preceeding it, not for the entire pipe)
-// FIXME: Activities: Terminated processes are not "stopped", they simply are removed from your list of processes. So only print "stopped" for stopped processes
-// FIXME: Ctrl + Z should stop the process and print "stopped" in activities
+// FIXME: Ctrl + Z should actually stop the process
 
 int check_redirection(char **args, int num_args, char **input_file, char **output_file, int *append_output)
 {
@@ -558,6 +557,15 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                 for (int k = 0; k < num_args; k++)
                     args[k] = NULL;
             }
+        }
+
+        // Remove zombie processes from the list
+        processStruct *temp = allProcesses;
+        while (temp != NULL)
+        {
+            if (waitpid(temp->pid, NULL, WNOHANG) != 0)
+                removeProcess(temp->pid, &allProcesses);
+            temp = temp->next;
         }
     }
 }

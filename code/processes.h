@@ -32,6 +32,9 @@ void addProcess(processStruct *newProcess, processStruct **head);
 // Check if a process is running in the background
 void checkBgProcesses(struct processStruct **ProcessList);
 
+// Remove a process from the linked list
+void removeProcess(pid_t pid, processStruct **head);
+
 // Free the memory allocated for the processes
 void freeProcesses(processStruct *head);
 

@@ -53,20 +53,31 @@ void activities(struct processStruct *allProcesses)
             }
 
     // Print the processes
+    bool print = false;
     for (int i = 0; i < num_processes; i++)
     {
-        printf("%d : %s - ", processPids[i], processNames[i]);
-
         if (strcmp(processStatus[i], "Stopped") == 0)
+        {
+            printf("%d : %s - ", processPids[i], processNames[i]);
             printf(RED "Stopped\n" RESET);
+            print = true;
+        }
         else
         {
             int status;
             pid_t result = waitpid(processPids[i], &status, WNOHANG);
             if (result == 0)
+            {
+                printf("%d : %s - ", processPids[i], processNames[i]);
+                if (WIFEXITED(status) || WIFSIGNALED(status))
+                    printf(RED "Stopped\n" RESET);
+                else
                 printf(GREEN "Running\n" RESET);
-            else
-                printf(RED "Stopped\n" RESET);
+                print = true;
+            }
         }
     }
+
+    if (!print)
+        printf("No processes to show\n");
 }
