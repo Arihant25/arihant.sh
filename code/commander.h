@@ -51,4 +51,7 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
 void commander(char *input_str, const char *home_dir, char **prev_dir,
                char **last_command, char *aliases[4096]);
 
+bool execute_custom_command(char **args, int num_args, const char *home_dir,
+                            char **prev_dir, char **last_command, char *aliases[4096]);
+
 #endif
