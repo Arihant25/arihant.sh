@@ -80,6 +80,8 @@ Accordingly, I have made some assumptions where the guidelines were not clear.
 
 13. If a command run is run in the background, and the command is invalid, it will print a PID along with the error message. The PID will be the PID of the child process that was forked to run the command.
 
+14. Only output redirection is supported for custom commands. Input redirection is not supported.
+
 ## Manual 📖
 ### hop
 - `hop` is used to change the current working directory.
