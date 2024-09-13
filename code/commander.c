@@ -400,7 +400,7 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
         end--;
     *(end + 1) = '\0';
 
-  for (int i = 0; i < pipe_count; i++)
+    for (int i = 0; i < pipe_count; i++)
     {
         char *args[4096];
         int arg_count = 0;
@@ -610,8 +610,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                         sigaddset(&mask, SIGTTOU);               // Add SIGTTOU to the set
                         sigprocmask(SIG_BLOCK, &mask, &oldmask); // Block SIGTTOU
 
-                        if (tcsetpgrp(STDIN_FILENO, pid) == -1) // Give terminal control to child
-                            printf(RED "Failed to give terminal control to child\n" RESET);
+                        tcsetpgrp(STDIN_FILENO, pid) == -1; // Give terminal control to child
 
                         int status; // Status of the child process
                         pid_t result = waitpid(pid, &status, WUNTRACED);
@@ -629,9 +628,7 @@ void commander(char *input_str, const char *home_dir, char **prev_dir,
                             addProcess(createProcessStruct(pid, args[0]), &bgProcesses);
                         }
 
-                        // Ensure shell regains control of the terminal
-                        if (tcsetpgrp(STDIN_FILENO, getpgrp()) == -1)
-                            printf(RED "Failed to regain terminal control\n" RESET);
+                        tcsetpgrp(STDIN_FILENO, getpgrp()) == -1; // Ensure shell regains control of the terminal
 
                         sigprocmask(SIG_SETMASK, &oldmask, NULL); // Unblock SIGTTOU
 
