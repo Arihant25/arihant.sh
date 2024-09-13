@@ -1,5 +1,21 @@
 #include "iman.h"
 
+void strip_html_tags(char *html, char *text)
+{
+    int i, j;
+    int in_tag = 0;
+    for (i = 0, j = 0; html[i]; i++)
+        if (html[i] == '<')
+            in_tag = 1;
+        else if (html[i] == '>')
+            in_tag = 0;
+        else if (!in_tag)
+        {
+            text[j++] = html[i];
+            text[j] = '\0';
+        }
+}
+
 void iMan(const char *command)
 {
     int sockfd;                     // Socket file descriptor
@@ -66,7 +82,6 @@ void iMan(const char *command)
         total_received += bytes_received;
     }
 
-    printf(BOLD "Manual page for %s:\n" RESET, command);
 
     // Handle missing man pages
     char *missing_str = (char *)malloc(4096);
@@ -74,15 +89,38 @@ void iMan(const char *command)
     if (strstr(response, missing_str))
     {
         printf(RED "No manual entry for \"%s\"\n" RESET, command);
+        free(missing_str);
         return;
     }
+    free(missing_str);
 
+    printf(BOLD "Manual page for %s:\n" RESET, command);
     // Find the start of the content
-    char *content_start = strstr(response, "<html");
+    char *content_start = strstr(response, "<html>");
     if (content_start)
-        printf("%s", content_start);
+    {
+        char *content_end = strstr(content_start, "</html>");
+        if (content_end)
+        {
+            *content_end = '\0'; // Null-terminate at the end of the content
+            char *stripped_content = (char *)malloc(strlen(content_start) + 1);
+            strip_html_tags(content_start, stripped_content);
+
+            // Format and print the content
+            char *line = strtok(stripped_content, "\n");
+            while (line)
+            {
+                printf("%s\n", line);
+                line = strtok(NULL, "\n");
+            }
+
+            free(stripped_content);
+        }
+        else
+            printf(RED "Error: Could not find end of content.\n" RESET);
+    }
     else
-        printf("Could not find start of content. Printing entire response:\n%s", response);
+        printf(RED "Error: Could not find start of content.\n" RESET);
 
     close(sockfd);
 }
