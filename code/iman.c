@@ -10,10 +10,8 @@ void strip_html_tags(char *html, char *text)
         else if (html[i] == '>')
             in_tag = 0;
         else if (!in_tag)
-        {
             text[j++] = html[i];
-            text[j] = '\0';
-        }
+    text[j] = '\0';
 }
 
 void iMan(const char *command)
@@ -81,7 +79,6 @@ void iMan(const char *command)
         memcpy(response + total_received, buffer, bytes_received);
         total_received += bytes_received;
     }
-
 
     // Handle missing man pages
     char *missing_str = (char *)malloc(4096);

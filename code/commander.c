@@ -400,7 +400,7 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
         end--;
     *(end + 1) = '\0';
 
-    for (int i = 0; i < pipe_count; i++)
+  for (int i = 0; i < pipe_count; i++)
     {
         char *args[4096];
         int arg_count = 0;
@@ -433,9 +433,16 @@ void execute_piped_commands(char *command, const char *home_dir, char **prev_dir
             }
 
             handle_redirection(input_file, output_file, append_output, &arg_count);
-            execvp(args[0], args);
-            printf(RED "ERROR : '%s' is not a valid command\n" RESET, args[0]);
-            exit(1);
+
+            // Check if the command is a custom command
+            if (execute_custom_command(args, arg_count, home_dir, prev_dir, last_command, aliases))
+                exit(0);
+            else
+            {
+                execvp(args[0], args);
+                printf(RED "ERROR : '%s' is not a valid command\n" RESET, args[0]);
+                exit(1);
+            }
         }
         else if (pid < 0)
         {
